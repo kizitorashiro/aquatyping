@@ -42,7 +42,7 @@ fn main() {
         info_bg: uifuncs::RenderColor::White,
     };
 
-    controller::control(funcs, color_config, audio, "/Users/shizuku/drawings/", config, 120);
+    controller::control(funcs, color_config, audio, "./drawings/", config, 120);
     /*
     let command_client = command::start_command_server(graphics, config, color_config, audio);
     command_client.appear("/Users/shizuku/drawings/001_megamouse_shark.png", "MEGAMOUSE SHARK");
