@@ -1,4 +1,4 @@
-use super::image2ascii::{Char2DArray, image2ascii};
+use image2ascii::{Char2DArray, image2ascii};
 use super::effector::{Effector, generate_effector, EffectorType, EffectorStatus, generate_appear_effector_randomly, generate_disappear_effector_randomly};
 use super::behavior::{Behavior, generate_behavior, BehaviorType, generate_behavior_randomly};
 

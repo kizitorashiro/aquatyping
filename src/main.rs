@@ -31,7 +31,7 @@ fn main() {
     let config = stage::StageConfig {
         //stage_wxh: (400, 120),
         stage_wxh: (640, 180), //140
-        aa_width: 300, //250
+        aa_width: 270, //250
         framerate: 10,
     };
     let audio = audiofuncs::generate_audiofuncs(audiofuncs::AudioFuncsType::OsCommand);

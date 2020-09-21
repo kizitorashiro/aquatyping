@@ -1,5 +1,5 @@
 use rand::{thread_rng, Rng};
-use super::image2ascii::{Char2DArray, CharPosition};
+use image2ascii::{Char2DArray, CharPosition};
 
 #[derive(Debug, PartialEq)]
 pub enum EffectorType {

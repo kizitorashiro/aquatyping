@@ -1,5 +1,5 @@
 use rand::{thread_rng, Rng};
-use super::image2ascii::{Char2DArray, string2ascii, CharPosition};
+use image2ascii::{Char2DArray, string2ascii, CharPosition};
 
 fn generate_character(character: char, size: f32, ch: char) -> Char2DArray {
     let mut string = String::new();

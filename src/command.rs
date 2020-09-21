@@ -17,6 +17,9 @@ pub enum Command {
     DisappearCommand(HashMap<String, String>),
     TelopCommand(HashMap<String, String>),
     TitleCommand(HashMap<String, String>),
+    SubTelopCommand(HashMap<String, String>),
+    SpeechCommand(HashMap<String, String>),
+    CharacterCommand(HashMap<String, String>),
 }
 
 pub struct CommandClient {
@@ -58,6 +61,26 @@ impl CommandClient {
         let cmd = Command::TitleCommand(params);
         self.chan_tx.send(cmd).unwrap();
     }
+    pub fn subtelop(&self, text: &str, pos: usize) {
+        let mut params = HashMap::new();
+        params.insert(String::from("text"), text.to_string());
+        params.insert(String::from("pos"), pos.to_string());
+        let cmd = Command::SubTelopCommand(params);
+        self.chan_tx.send(cmd).unwrap();
+    }
+    pub fn speech(&self, text: &str, lang: &str) {
+        let mut params = HashMap::new();
+        params.insert(String::from("text"), text.to_string());
+        params.insert(String::from("lang"), lang.to_string());
+        let cmd = Command::SpeechCommand(params);
+        self.chan_tx.send(cmd).unwrap();
+    }
+    pub fn character(&self, ch: char) {
+        let mut params = HashMap::new();
+        params.insert(String::from("ch"), ch.to_string());
+        let cmd = Command::CharacterCommand(params);
+        self.chan_tx.send(cmd).unwrap();
+    }
 }
 
 pub fn start_command_server(graphics: Box<dyn UIGraphics>, config: StageConfig, color_config: ColorConfig, audio: Box<dyn AudioFuncs>) -> CommandClient {
@@ -79,12 +102,12 @@ pub fn start_command_server(graphics: Box<dyn UIGraphics>, config: StageConfig, 
                                         stage.appear(filename);
                                     }
                                     if let Some(name) = data.get("name") {
-                                        audio.speech(name);
+                                        //audio.speech(name);
                                     }
                                 },
                                 Command::DisappearCommand(data) => {
                                     if let Some(name) = data.get("name") {
-                                        audio.speech_lang(&format!("{},Get", name), "ja");
+                                        //audio.speech_lang(&format!("{},Get", name), "ja");
                                     }
                                     stage.disappear();
                                 },
@@ -96,10 +119,12 @@ pub fn start_command_server(graphics: Box<dyn UIGraphics>, config: StageConfig, 
 
                                     let pos: usize = data.get("pos").unwrap_or(&String::from("0")).parse().unwrap();
                                     let offset = stage.telop_offset();
+                                    /*
                                     if pos > 0  && pos < text.len() {
                                         let ch = text.chars().nth(pos-1).unwrap().to_ascii_lowercase();
                                         audio.speech(&ch.to_string());
                                     }
+                                    */
                                     graphics.draw_area(&current_color, &current_bg, &stage.update_telop(text, pos).buffer, Some((0, offset)));
                                     graphics.flush();
                                 },
@@ -108,6 +133,33 @@ pub fn start_command_server(graphics: Box<dyn UIGraphics>, config: StageConfig, 
                                         stage.title(filename);
                                     }
                                 },
+                                Command::SubTelopCommand(data) => {
+                                    let mut text = "";
+                                    if let Some(text_data) = data.get("text") {
+                                        text = text_data;
+                                    }
+
+                                    let pos: usize = data.get("pos").unwrap_or(&String::from("0")).parse().unwrap();
+                                    let offset = stage.subtelop_offset();
+                                    graphics.draw_area(&current_color, &current_bg, &stage.update_subtelop(text, pos).buffer, Some((0, offset)));
+                                    graphics.flush();
+                                },
+                                Command::SpeechCommand(data) => {
+                                    if let Some(text) = data.get("text") {
+                                        if let Some(lang) = data.get("lang") {
+                                            audio.speech_lang(text, lang);
+                                        } else {
+                                            audio.speech(text);
+                                        }
+                                    }
+                                },
+                                Command::CharacterCommand(data) => {
+                                    if let Some(ch) = data.get("ch") {
+                                        if let Some(character) = ch.chars().nth(0) {
+                                            stage.update_character(character);
+                                        }
+                                    }
+                                }
                             }
                         },
                         Err(_) => {

@@ -1,16 +1,17 @@
 use rand::{thread_rng, Rng};
-use super::image2ascii::{Char2DArray, CharPosition};
+use image2ascii::{Char2DArray, CharPosition};
 use super::asciiart::{AsciiArt, AsciiArtContext, AsciiArtState};
 use super::background::{Background, BackgroundType, generate_background_randomly};
 use super::effector::EffectorType;
 use super::behavior::BehaviorType;
-use super::image2ascii::string2ascii;
+use image2ascii::string2ascii;
 use super::character::{Character, CharacterConfig, CharacterStatus};
 
 
 pub struct Stage {
     pict_area: Char2DArray,
     telop_area: Char2DArray,
+    subtelop_area: Char2DArray,
     ascii_art: Option<AsciiArt>,
     background: Option<Box<dyn Background>>,
     config: StageConfig,
@@ -29,11 +30,13 @@ pub struct StageConfig {
 impl Stage {
 
     pub fn new(config: StageConfig) -> Self {
-        let pict_area_height = ((config.stage_wxh.1 as f32 / 6.0) * 5.0) as usize;
-        let telop_area_height = config.stage_wxh.1 - pict_area_height;
+        let pict_area_height = ((config.stage_wxh.1 as f32 / 6.0) * 4.0) as usize;
+        let telop_area_height = ((config.stage_wxh.1 - pict_area_height) as f32 / 2.0) as usize;
+        let subtelop_area_height = config.stage_wxh.1 - pict_area_height - telop_area_height;
         Stage {
             pict_area: Char2DArray::new(config.stage_wxh.0, pict_area_height),
             telop_area: Char2DArray::new(config.stage_wxh.0, telop_area_height),
+            subtelop_area: Char2DArray::new(config.stage_wxh.0, subtelop_area_height),
             ascii_art: Option::None,
             background: Option::None,
             config: config,
@@ -59,6 +62,10 @@ impl Stage {
         self.pict_area.height()
     }
 
+    pub fn subtelop_offset(&self) -> usize {
+        self.pict_area.height() + self.telop_area.height()
+    }
+
     pub fn appear(&mut self, image_file: &str){
         let context = AsciiArtContext{
             stage_wxh: self.config.stage_wxh,
@@ -79,18 +86,21 @@ impl Stage {
         }
     }
 
+    
+
     pub fn update_telop(&mut self, text: &str, pos: usize) -> &Char2DArray {
         let mut rng = thread_rng();
         let mut clear = Char2DArray::new(self.config.stage_wxh.0, self.telop_area.height());
         clear.overwrite_char_all(' ');
         self.telop_area.overwrite_rect(&clear, CharPosition{x:0,y:0}, Option::None);
-        if let Ok(telop) = string2ascii(text, self.telop_area.height() as f32, '@', Some((pos, '-')), Option::None) {
+        if let Ok(telop) = string2ascii(text, self.telop_area.height() as f32, '@', Some((pos, '-')), Some("./font/wqy-microhei/WenQuanYiMicroHei.ttf")) {
             self.telop_area.overwrite_rect(&telop, CharPosition{x:0, y:0}, Option::None);
             //self.telop_area = telop;
         } else {
             self.telop_area.overwrite_char_all(' ');
         }
 
+        /*
         if pos >= 1 {
             let config = CharacterConfig {
                 area_wxh : (self.pict_area.width(), self.pict_area.height()),
@@ -102,7 +112,32 @@ impl Stage {
             };
             self.typed_char = Some(Character::new(text.chars().nth(pos-1).unwrap(), config));
         }
+        */
         &self.telop_area
+    }
+
+    pub fn update_character(&mut self, ch: char) {
+        let config = CharacterConfig {
+            area_wxh : (self.pict_area.width(), self.pict_area.height()),
+            min_size: self.pict_area.height() as f32 / 3.0,
+            max_size: self.pict_area.height() as f32 / 1.0,
+            chars: vec!['@','*','+','-'],
+            duration_ms: 500,
+            framerate: self.config.framerate,
+        };
+        self.typed_char = Some(Character::new(ch, config));
+    }
+
+    pub fn update_subtelop(&mut self, text: &str, pos: usize) -> &Char2DArray {
+        let mut clear = Char2DArray::new(self.config.stage_wxh.0, self.subtelop_area.height());
+        clear.overwrite_char_all(' ');
+        self.subtelop_area.overwrite_rect(&clear, CharPosition{x:0,y:0}, Option::None);
+        if let Ok(telop) = string2ascii(text, self.subtelop_area.height() as f32, '@', Some((pos, '-')), Some("./font/wqy-microhei/WenQuanYiMicroHei.ttf")) {
+            self.subtelop_area.overwrite_rect(&telop, CharPosition{x:0, y:0}, Option::None);
+        } else {
+            self.subtelop_area.overwrite_char_all(' ');
+        }
+        &self.subtelop_area
     }
 
 

@@ -1,5 +1,4 @@
 
-pub mod image2ascii;
 pub mod asciiart;
 pub mod effector;
 pub mod behavior;

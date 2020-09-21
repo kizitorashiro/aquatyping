@@ -14,9 +14,7 @@ serde = { version = "1.0.115", features = ["derive"] }
 serde_json = "*"
 rand = "0.7.3"
 crossbeam-channel = "0.4.3"
-# tuikit = "0.3.3"
-# rustbox = "*"
 termion = "*"
-
+image2ascii = "0.2.1"
 
 

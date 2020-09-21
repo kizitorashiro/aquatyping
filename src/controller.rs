@@ -145,7 +145,9 @@ struct TypingInfo {
     filepath: String,
     words: String,
     words_ja: String,
+    words_romaji: String,
     pos: usize,
+    subpos: usize,
     start_time: Instant,
     typo: u32,
     status: TypingStatus,
@@ -171,7 +173,9 @@ impl TypingController {
             typing_info: None,
         }
     }
-    
+
+  
+
     fn load_pict(&mut self, command_client: &CommandClient) -> bool {
         let index = self.index_series.pop();
         match index {
@@ -181,13 +185,17 @@ impl TypingController {
                         filepath: self.pict_manager.get_pict_path(pict),
                         words: pict.en.to_string(),
                         words_ja: pict.ja.to_string(),
+                        words_romaji: pict.romaji.to_string().to_ascii_uppercase(),
                         pos: 0,
+                        subpos: 0,
                         start_time: Instant::now(),
                         typo: 0,
                         status: TypingStatus::TYPING,
                     };
+                    command_client.speech(&typing_info.words_ja, "ja");
                     command_client.appear(&self.pict_manager.get_pict_path(pict), &pict.en);
-                    command_client.telop(&typing_info.words, 0);
+                    command_client.telop(&typing_info.words_romaji.replace("_", " ").replace("~"," "), 0);
+                    command_client.subtelop(&typing_info.words_ja, 0);
                     self.typing_info = Some(typing_info);
                     true
                 } else {
@@ -203,6 +211,7 @@ impl TypingController {
     fn unload_pict(&mut self, command_client: &CommandClient) -> Option<TypingResult> {
     
         if let Some(info) = &mut self.typing_info {
+            command_client.speech(&format!("I caught {}!", &info.words), "en");
             command_client.disappear(&info.words_ja);
         
             let result = TypingResult {
@@ -223,6 +232,7 @@ impl TypingController {
         if let Some(info) = &mut self.typing_info {
             match info.status {
                 TypingStatus::TYPING => {
+                    /*
                     let target = info.words.chars().nth(info.pos).unwrap();
                     //panic!("chchchchc  {} {}", input_ch, target);
                     
@@ -233,6 +243,79 @@ impl TypingController {
                         if info.pos >= info.words.len() {
                             return self.unload_pict(command_client);
                         }
+                    } else {
+                        info.typo += 1;
+                    }
+                    */
+                    let target = info.words_romaji.chars().nth(info.pos).unwrap();
+                    
+                    //panic!("chchchchc  {} {}", input_ch, target);
+                    
+                    if target.to_ascii_lowercase() == input_ch.to_ascii_lowercase() {
+                        command_client.character(input_ch.to_ascii_uppercase());
+                        info.pos += 1;
+                        
+                        //command_client.telop(&info.words_romaji, info.pos);
+
+                        
+                        if let Some(next_target) = info.words_romaji.chars().nth(info.pos) {
+                            match next_target {
+                                '_' => {
+                                    info.pos += 1;
+                                    info.subpos += 1;
+                                    if let Some(speech_ch) = info.words_ja.chars().nth(info.subpos-1) {
+                                        command_client.speech(&speech_ch.to_string(), "ja");
+                                    }
+                                    command_client.subtelop(&info.words_ja, info.subpos);
+                                    command_client.telop(&info.words_romaji.replace("_", " ").replace("~"," "), info.pos);
+                                    
+                                },
+                                '~' => {
+                                    info.pos += 1;
+                                    info.subpos += 2;
+                                    if let Some(speech_ch) = info.words_ja.chars().nth(info.subpos-2) {
+                                        if let Some(speech_ch2) = info.words_ja.chars().nth(info.subpos-1) {
+                                            let speech_ch = speech_ch.to_string();
+                                            let speech_ch2 = speech_ch2.to_string();
+                                            let speech_char = format!("{}{}", speech_ch, speech_ch2);
+                                            command_client.speech(&speech_char, "ja");
+                                        }
+                                    }
+                                    command_client.subtelop(&info.words_ja, info.subpos);
+                                    command_client.telop(&info.words_romaji.replace("_", " ").replace("~"," "), info.pos);
+                                },
+                                _ => {
+                                    command_client.telop(&info.words_romaji.replace("_", " ").replace("~"," "), info.pos);
+                                },
+                            }
+                        }
+                        if info.pos >= info.words_romaji.len() {
+                            return self.unload_pict(command_client);
+                        }
+
+
+                        /*
+                        if info.pos >= info.words_romaji.len() {
+                            info.subpos += 1;
+                            command_client.subtelop(&info.words_ja, info.subpos);
+                            command_client.telop(&info.words_romaji, info.pos);
+                            command_client.speech(&info.words_ja.chars().nth(info.subpos-1).unwrap().to_string(), "ja");
+                            return self.unload_pict(command_client);
+                        } else {
+                            let next_target = info.words_romaji.chars().nth(info.pos).unwrap();
+                            if next_target == '_' {
+                                info.pos += 1;
+                                info.subpos += 1;
+                                command_client.speech(&info.words_ja.chars().nth(info.subpos-1).unwrap().to_string(), "ja");
+                                command_client.subtelop(&info.words_ja, info.subpos);
+                                command_client.telop(&info.words_romaji, info.pos-1);
+                            
+                                
+                            }else{
+                                command_client.telop(&info.words_romaji, info.pos);
+                            }
+                        }
+                        */
                     } else {
                         info.typo += 1;
                     }

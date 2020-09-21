@@ -9,6 +9,7 @@ use rand::{thread_rng, Rng};
 pub struct Pict {
     pub id: String,
     pub ja: String,
+    pub romaji: String,
     pub en: String,
     pub tags: Vec<String>,
 }
@@ -66,8 +67,8 @@ impl PictManager {
     }
     */
     pub fn index_series(&self, size: usize) -> Vec<usize> {
-        let mut index_series = generate_random_index_series(self.pict_info.picts.len(), size);
-        //let mut index_series = generate_index_series(self.pict_info.picts.len(), size);
+        //let mut index_series = generate_random_index_series(self.pict_info.picts.len(), size);
+        let mut index_series = generate_index_series(self.pict_info.picts.len(), size);
         
         //let mut n = index_series.split_off(67);
         //n.reverse();

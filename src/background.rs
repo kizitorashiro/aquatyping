@@ -2,7 +2,7 @@
 use rand::{thread_rng, Rng};
 use rand::rngs::ThreadRng;
 use std::collections::HashSet;
-use super::image2ascii::{Char2DArray};
+use image2ascii::{Char2DArray};
 
 
 pub trait Background {
